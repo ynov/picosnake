@@ -1,0 +1,5 @@
+BasedOnStyle: WebKit
+BreakBeforeBraces: Linux
+SpaceAfterCStyleCast: true
+IndentWidth: 4
+ColumnLimit: 120

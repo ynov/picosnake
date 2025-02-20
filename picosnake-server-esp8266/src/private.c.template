@@ -1,0 +1,7 @@
+// It is a template for the private.c file
+
+const char* ssid = "";
+const char* password = "";
+
+const char* ap_ssid = "PicoSnake AP";
+const char* ap_password = "PicoSnakeAP";
