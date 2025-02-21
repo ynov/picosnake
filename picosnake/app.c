@@ -1,6 +1,6 @@
 #include <FreeRTOS.h>
-#include <task.h>
 #include <stdlib.h>
+#include <task.h>
 
 #include "hardware/adc.h"
 #include "hardware/spi.h"
@@ -13,11 +13,11 @@
 #include "snake.h"
 
 #define COLOR 1
+#define MOVEMENT_DELAY_MS ((uint8_t) 150u)
 #define INITIAL_DIRECTION SNAKE_DIRECTION_RIGHT
 
 static Snake snake;
 static FrameBuffer fb;
-static uint16_t delay_ms = 150;
 static volatile uint8_t move_direction = INITIAL_DIRECTION;
 
 static void init_random()
@@ -59,36 +59,24 @@ static void on_message(const char* message)
     }
 }
 
-
-
 void app_task(void* parameters)
 {
     init_random();
     register_on_message_callback(on_message);
 
-    fb_init(fb, NUM_COLUMNS, NUM_ROWS);
-
     snake_init_board();
     snake_init(&snake, snake_at(1, 1), 2, snake_get_direction_fn(INITIAL_DIRECTION));
-    snake_board_to_buffer(fb.pixels);
-
     snake_spawn_food_random(&snake);
 
+    fb_init_from_buffer(fb, NUM_COLUMNS, NUM_ROWS, snake_buffer());
+
     lm_init();
-    lm_write_register_from_framebuffer(&fb);
 
     while (true) {
-        snake_board_to_buffer(fb.pixels);
         lm_write_register_from_framebuffer(&fb);
 
-        if (snake_can_move(&snake, snake_get_direction_fn(move_direction))) {
-            if (snake_get_direction_fn(move_direction)(snake.head)->is_food) {
-                snake_spawn_food_random(&snake);
-            }
+        snake_move_and_check(&snake, snake_get_direction_fn(move_direction));
 
-            snake_move(&snake, snake_get_direction_fn(move_direction));
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
+        vTaskDelay(pdMS_TO_TICKS(MOVEMENT_DELAY_MS));
     }
 }

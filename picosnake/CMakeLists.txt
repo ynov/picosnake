@@ -26,7 +26,7 @@ endif()
 # Set the closest board type (e.g., pico, pico2, etc...)
 set(PICO_BOARD pico CACHE STRING "Board type")
 
-set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/../../shared_lib/FreeRTOS-Kernel)
+set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/../FreeRTOS-Kernel)
 
 include_directories(include)
 include_directories(${FREERTOS_KERNEL_PATH}/include)
@@ -69,7 +69,6 @@ target_include_directories(picosnake PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 # pull in common dependencies
 target_link_libraries(picosnake pico_stdlib hardware_spi hardware_adc FreeRTOS-Kernel FreeRTOS-Kernel-Heap4)
-
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(picosnake)

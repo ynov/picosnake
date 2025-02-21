@@ -48,6 +48,7 @@ void snake_init_board();
 void snake_init(Snake* snake, SnakePoint* starting_point, int grow_num, SnakePoint* (*direction_fn)(SnakePoint*) );
 void snake_grow(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) );
 void snake_move(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) );
+void snake_move_and_check(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*));
 void snake_spawn_food_random(Snake* snake);
 void snake_spawn_food(uint16_t x, uint16_t y);
 void snake_print_board();
@@ -55,7 +56,7 @@ bool snake_can_move(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) );
 SnakePoint* (*snake_get_direction_fn(uint8_t direction))(SnakePoint*);
 SnakePoint* (*snake_get_direction_fn_str(const char* direction))(SnakePoint*);
 
-void snake_board_to_buffer(uint8_t* dest);
+uint8_t* snake_buffer();
 
 #ifdef __cplusplus
 }

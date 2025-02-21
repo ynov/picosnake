@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-#include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
-#include "task.h"
+#include <FreeRTOS.h>
+#include <task.h>
 
 #include "pico/stdio.h"
 #include "pico/stdlib.h"

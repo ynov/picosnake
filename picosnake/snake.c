@@ -1,24 +1,41 @@
+#include "snake.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "snake.h"
 
+static uint8_t buffer[HEIGHT * WIDTH];
 static SnakePoint board[HEIGHT * WIDTH];
+
+static void set_buffer(uint16_t x, uint16_t y, uint8_t value) { buffer[(HEIGHT - y - 1) * WIDTH + x] = value; }
+
+static void set_is_body(SnakePoint* pt, bool value)
+{
+    pt->is_body = value;
+    set_buffer(pt->x, pt->y, value ? 1 : 0);
+}
+
+static void set_is_food(SnakePoint* pt, bool value)
+{
+    pt->is_food = value;
+    set_buffer(pt->x, pt->y, value ? 1 : 0);
+}
 
 void snake_init_board()
 {
-    for (int row = 0; row < HEIGHT; row++) {
-        for (int col = 0; col < WIDTH; col++) {
+    memset(buffer, 0, HEIGHT * WIDTH);
+
+    for (uint8_t row = 0; row < HEIGHT; row++) {
+        for (uint8_t col = 0; col < WIDTH; col++) {
             SnakePoint* pt = &board[(HEIGHT - row - 1) * WIDTH + col];
 
             pt->x = col;
             pt->y = (HEIGHT - row - 1);
 
-            pt->is_food = false;
-            pt->is_body = false;
+            set_is_food(pt, false);
+            set_is_body(pt, false);
 
             pt->next = NULL;
         }
@@ -30,8 +47,8 @@ void snake_print_board()
     static int count = 0;
     printf("Board %d:\n", count++);
 
-    for (int row = 0; row < HEIGHT; row++) {
-        for (int col = 0; col < WIDTH; col++) {
+    for (uint8_t row = 0; row < HEIGHT; row++) {
+        for (uint8_t col = 0; col < WIDTH; col++) {
             if (board[(HEIGHT - row - 1) * WIDTH + col].is_food) {
                 printf("* ");
             } else if (board[(HEIGHT - row - 1) * WIDTH + col].is_body) {
@@ -84,7 +101,6 @@ SnakePoint* snake_still(SnakePoint* pt) { return pt; }
 void snake_grow(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) )
 {
     SnakePoint* next = direction_fn(snake->head);
-    next->is_body = true;
 
     snake->head->next = next;
     if (next != NULL) {
@@ -92,12 +108,13 @@ void snake_grow(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) )
     }
 
     snake->length++;
+
+    set_is_body(next, true);
 }
 
 void snake_move(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) )
 {
     SnakePoint* next = direction_fn(snake->head);
-    next->is_body = true;
 
     snake->head->next = next;
     if (next != NULL) {
@@ -105,18 +122,17 @@ void snake_move(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) )
     }
 
     if (next->is_food) {
-        next->is_food = false;
+        set_is_food(next, false);
         snake->length++;
     } else {
-        snake->tail->is_body = false;
+        set_is_body(snake->tail, false);
         snake->tail = snake->tail->next;
     }
+
+    set_is_body(next, true);
 }
 
-void snake_spawn_food(uint16_t x, uint16_t y)
-{
-    snake_at(x, y)->is_food = true;
-}
+void snake_spawn_food(uint16_t x, uint16_t y) { set_is_food(snake_at(x, y), true); }
 
 void snake_spawn_food_random(Snake* snake)
 {
@@ -135,14 +151,26 @@ void snake_spawn_food_random(Snake* snake)
     }
 }
 
-void snake_init(Snake* snake, SnakePoint* starting_point, int grow_num, SnakePoint* (*direction_fn)(SnakePoint*))
+void snake_move_and_check(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) )
+{
+    SnakePoint* next = direction_fn(snake->head);
+
+    if (snake_can_move(snake, direction_fn)) {
+        if (next->is_food) {
+            snake_spawn_food_random(snake);
+        }
+        snake_move(snake, direction_fn);
+    }
+}
+
+void snake_init(Snake* snake, SnakePoint* starting_point, int grow_num, SnakePoint* (*direction_fn)(SnakePoint*) )
 {
     snake->head = starting_point;
     snake->tail = starting_point;
     snake->length = 1;
-    starting_point->is_body = true;
+    set_is_body(starting_point, true);
 
-    for (int i = 0; i < grow_num; i++) {
+    for (uint8_t i = 0; i < grow_num; i++) {
         snake_grow(snake, direction_fn);
     }
 }
@@ -155,16 +183,16 @@ bool snake_can_move(Snake* snake, SnakePoint* (*direction_fn)(SnakePoint*) )
 SnakePoint* (*snake_get_direction_fn(uint8_t direction))(SnakePoint*)
 {
     switch (direction) {
-        case SNAKE_DIRECTION_UP:
-            return snake_up;
-        case SNAKE_DIRECTION_DOWN:
-            return snake_down;
-        case SNAKE_DIRECTION_LEFT:
-            return snake_left;
-        case SNAKE_DIRECTION_RIGHT:
-            return snake_right;
-        default:
-            return snake_still;
+    case SNAKE_DIRECTION_UP:
+        return snake_up;
+    case SNAKE_DIRECTION_DOWN:
+        return snake_down;
+    case SNAKE_DIRECTION_LEFT:
+        return snake_left;
+    case SNAKE_DIRECTION_RIGHT:
+        return snake_right;
+    default:
+        return snake_still;
     }
 }
 
@@ -183,12 +211,4 @@ SnakePoint* (*snake_get_direction_fn_str(const char* direction))(SnakePoint*)
     }
 }
 
-void snake_board_to_buffer(uint8_t* dest)
-{
-    for (uint16_t y = 0; y < HEIGHT; y++) {
-        for (uint16_t x = 0; x < WIDTH; x++) {
-            SnakePoint* pt = snake_at(x, (HEIGHT - y - 1));
-            dest[y * WIDTH + x] = pt->is_body || pt->is_food ? 1 : 0;
-        }
-    }
-}
+uint8_t* snake_buffer() { return buffer; }
