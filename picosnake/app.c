@@ -16,6 +16,12 @@
 #define MOVEMENT_DELAY_MS ((uint8_t) 150u)
 #define INITIAL_DIRECTION SNAKE_DIRECTION_RIGHT
 
+#define CMD_UP "cmd:u"
+#define CMD_LEFT "cmd:l"
+#define CMD_RIGHT "cmd:r"
+#define CMD_DOWN "cmd:d"
+#define CMD_RESET "cmd:reset"
+
 static Snake snake;
 static FrameBuffer fb;
 static volatile uint8_t move_direction = INITIAL_DIRECTION;
@@ -29,29 +35,40 @@ static void init_random()
     srand(raw);
 }
 
+static void reset_game()
+{
+    snake_init_board();
+    snake_init(&snake, snake_at(1, 1), 2, snake_get_direction_fn(INITIAL_DIRECTION));
+    snake_spawn_food_random(&snake);
+}
+
+
 static void on_message(const char* message)
 {
     uint8_t next_direction;
-    if (strcmp(message, "cmd:move_up") == 0) {
+    if (strcmp(message, CMD_UP) == 0) {
         next_direction = SNAKE_DIRECTION_UP;
 
         printf("log: moving up...\r\n");
         uart_printf(uart0, "ok:%s\r\n", message);
-    } else if (strcmp(message, "cmd:move_down") == 0) {
+    } else if (strcmp(message, CMD_DOWN) == 0) {
         next_direction = SNAKE_DIRECTION_DOWN;
 
         printf("log: moving down...\r\n");
         uart_printf(uart0, "ok:%s\r\n", message);
-    } else if (strcmp(message, "cmd:move_left") == 0) {
+    } else if (strcmp(message, CMD_LEFT) == 0) {
         next_direction = SNAKE_DIRECTION_LEFT;
 
         printf("log: moving left...\r\n");
         uart_printf(uart0, "ok:%s\r\n", message);
-    } else if (strcmp(message, "cmd:move_right") == 0) {
+    } else if (strcmp(message, CMD_RIGHT) == 0) {
         next_direction = SNAKE_DIRECTION_RIGHT;
 
         printf("log: moving right...\r\n");
         uart_printf(uart0, "ok:%s\r\n", message);
+    } else if (strcmp(message, CMD_RESET) == 0) {
+        move_direction = INITIAL_DIRECTION;
+        reset_game();
     }
 
     if (snake_can_move(&snake, snake_get_direction_fn(next_direction))) {
@@ -64,19 +81,19 @@ void app_task(void* parameters)
     init_random();
     register_on_message_callback(on_message);
 
-    snake_init_board();
-    snake_init(&snake, snake_at(1, 1), 2, snake_get_direction_fn(INITIAL_DIRECTION));
-    snake_spawn_food_random(&snake);
+    reset_game();
 
     fb_init_from_buffer(fb, NUM_COLUMNS, NUM_ROWS, snake_buffer());
 
     lm_init();
 
     while (true) {
+        vTaskDelay(pdMS_TO_TICKS(MOVEMENT_DELAY_MS / 2));
+
         lm_write_register_from_framebuffer(&fb);
 
         snake_move_and_check(&snake, snake_get_direction_fn(move_direction));
 
-        vTaskDelay(pdMS_TO_TICKS(MOVEMENT_DELAY_MS));
+        vTaskDelay(pdMS_TO_TICKS(MOVEMENT_DELAY_MS / 2));
     }
 }

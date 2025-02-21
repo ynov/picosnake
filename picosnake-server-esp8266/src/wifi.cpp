@@ -5,6 +5,12 @@
 
 WiFiServer server(80);
 
+#define CMD_UP "cmd:u"
+#define CMD_LEFT "cmd:l"
+#define CMD_RIGHT "cmd:r"
+#define CMD_DOWN "cmd:d"
+#define CMD_RESET "cmd:reset"
+
 void wifi_setup()
 {
 #if WIFI_MODE_WIFI_AP && WIFI_MODE_WIFI_STA
@@ -58,21 +64,25 @@ void wifi_main()
                 if (c == '\n') {
                     if (!commandProcessed && currentLine.startsWith("GET")) {
                         if (currentLine.startsWith("GET /up")) {
-                            commandName = "move_up";
+                            commandName = CMD_UP;
+                            Serial.println(CMD_UP);
                             commandProcessed = true;
-                            Serial.println("cmd:move_up");
                         } else if (currentLine.startsWith("GET /left")) {
-                            commandName = "move_left";
+                            commandName = CMD_LEFT;
+                            Serial.println(CMD_LEFT);
                             commandProcessed = true;
-                            Serial.println("cmd:move_left");
                         } else if (currentLine.startsWith("GET /right")) {
-                            commandName = "move_right";
+                            commandName = CMD_RIGHT;
+                            Serial.println(CMD_RIGHT);
                             commandProcessed = true;
-                            Serial.println("cmd:move_right");
                         } else if (currentLine.startsWith("GET /down")) {
-                            commandName = "move_down";
+                            commandName = CMD_DOWN;
+                            Serial.println(CMD_DOWN);
                             commandProcessed = true;
-                            Serial.println("cmd:move_down");
+                        } else if (currentLine.startsWith("GET /reset")) {
+                            commandName = CMD_RESET;
+                            Serial.println(CMD_RESET);
+                            commandProcessed = true;
                         }
                     }
 

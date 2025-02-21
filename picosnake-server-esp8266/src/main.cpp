@@ -4,7 +4,7 @@
 
 #define RX_BUFFER_SIZE 4096
 #define RX_BUFFER_RESET_CYCLE 10000
-#define UART_BAUD_RATE 9600
+#define UART_BAUD_RATE 19200
 
 static char rx_buffer[RX_BUFFER_SIZE];
 static uint16_t rx_buffer_index, rx_buffer_not_empty_cycle = 0;

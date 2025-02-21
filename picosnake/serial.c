@@ -7,7 +7,7 @@
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
 
-#define UART_BAUD_RATE 9600
+#define UART_BAUD_RATE 19200
 #define RX_BUFFER_SIZE 4096
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 #define MAX_CALLBACKS 8
