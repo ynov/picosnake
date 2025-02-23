@@ -34,7 +34,7 @@ const char* IRAM_ATTR PageContent = R"(<!DOCTYPE html>
         height: 320px;
         background-color: #f0f0f0;
         position: relative;
-        border-radius: 20%;
+        border-radius: 5%;
         box-shadow: 4px 4px 10px 2px #626262;
       }
 
@@ -76,16 +76,12 @@ const char* IRAM_ATTR PageContent = R"(<!DOCTYPE html>
     </div>
 
     <script>
-      let previousDirection = "none";
       let currentDirection = "none";
 
       window.cmd = {
         move: function (direction) {
-          if (previousDirection !== direction) {
-            previousDirection = direction;
-            console.log(`move: ${direction}`);
-            window.fetch(`/${direction}`, { method: "GET" });
-          }
+          console.log(`move: ${direction}`);
+          window.fetch(`/${direction}`, { method: "GET" });
         },
         reset: function () {
           console.log("reset");
@@ -121,9 +117,13 @@ const char* IRAM_ATTR PageContent = R"(<!DOCTYPE html>
         xOffset = 0;
         yOffset = 0;
         setTranslate(0, 0, joystick);
-        currentDirection = "none";
         isDragging = false;
+        setTimeout(() => {
+          currentDirection = "none";
+        }, 10);
       }
+
+      let timeout;
 
       function drag(e) {
         if (isDragging) {
@@ -157,17 +157,22 @@ const char* IRAM_ATTR PageContent = R"(<!DOCTYPE html>
             angle += 360;
           }
 
+          let nextDirection = "none";
+
           if (angle > 45 && angle < 135) {
-            currentDirection = "down";
+            nextDirection = "down";
           } else if (angle > 135 && angle < 225) {
-            currentDirection = "left";
+            nextDirection = "left";
           } else if (angle > 225 && angle < 315) {
-            currentDirection = "up";
+            nextDirection = "up";
           } else if (angle > 315 || angle < 45) {
-            currentDirection = "right";
+            nextDirection = "right";
           }
 
-          window.cmd.move(currentDirection);
+          if (nextDirection !== currentDirection) {
+            currentDirection = nextDirection;
+            window.cmd.move(currentDirection);
+          }
 
           setTranslate(xOffset, yOffset, joystick);
         }
