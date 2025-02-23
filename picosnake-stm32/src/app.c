@@ -1,4 +1,4 @@
-#include "hardware/adc.h"
+#include <time.h>
 
 #include "framebuffer.h"
 #include "ledmatrix.h"
@@ -22,11 +22,7 @@ static volatile uint8_t move_direction = INITIAL_DIRECTION;
 
 static void init_random()
 {
-    adc_init();
-    adc_set_temp_sensor_enabled(true);
-    adc_select_input(4);
-    uint16_t raw = adc_read();
-    srand(raw);
+    srand(time(NULL));
 }
 
 static void reset_game()
@@ -38,7 +34,8 @@ static void reset_game()
 
 static void on_message(const char* message)
 {
-    uint8_t next_direction;
+    uint8_t next_direction = SNAKE_DIRECTION_STOP;
+
     if (strcmp(message, CMD_UP) == 0) {
         next_direction = SNAKE_DIRECTION_UP;
 

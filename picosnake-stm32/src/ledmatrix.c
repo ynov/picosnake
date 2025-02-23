@@ -1,20 +1,15 @@
-#include <string.h>
-
-#include "hardware/spi.h"
-
-#include "pico/binary_info.h"
-#include "pico/stdlib.h"
-
-#include "framebuffer.h"
+#include "hal.h"
 #include "ledmatrix.h"
 
+#include <string.h>
+
+SPI_HandleTypeDef hspi1;
+
 /**
- * SPI0 GPIO Configuration
- *
- * GP17 (pin 22) ------> Chip Select    ------> CS on Max7219 board
- * GP18 (pin 24) ------> SCK / SPI0_SCK ------> CLK on Max7219 board
- * GP19 (pin 25) ------> MOSI / SPI0_TX ------> DIN on Max7219 board
- **/
+ * SPI1 GPIO Configuration
+ * PA5 ------> SPI1_SCK
+ * PA7 ------> SPI1_MOSI
+ */
 
 const uint8_t CMD_NOOP = 0;
 const uint8_t CMD_DIGIT0 = 1; // Goes up to 8, for each line
@@ -27,14 +22,14 @@ const uint8_t CMD_DISPLAYTEST = 15;
 static inline void cs_select()
 {
     asm volatile("nop \n nop \n nop");
-    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, 0); // Active low
+    HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_RESET); // Active low
     asm volatile("nop \n nop \n nop");
 }
 
 static inline void cs_deselect()
 {
     asm volatile("nop \n nop \n nop");
-    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, 1);
+    HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
     asm volatile("nop \n nop \n nop");
 }
 
@@ -46,7 +41,7 @@ void lm_write_register_all(uint8_t reg, uint8_t data)
 
     cs_select();
     for (int i = 0; i < NUM_MODULES; i++) {
-        spi_write_blocking(spi_default, buf, 2);
+        HAL_SPI_Transmit(&hspi1, buf, 2, HAL_MAX_DELAY);
     }
     cs_deselect();
 }
@@ -59,7 +54,7 @@ void lm_write_register(uint8_t reg, uint8_t* data, size_t size)
     cs_select();
     for (uint8_t i = 0; i < size; i++) {
         buf[1] = data[size - 1 - i];
-        spi_write_blocking(spi_default, buf, 2);
+        HAL_SPI_Transmit(&hspi1, buf, 2, HAL_MAX_DELAY);
     }
     cs_deselect();
 }
@@ -93,29 +88,8 @@ void lm_write_register_from_framebuffer(FrameBuffer* fb)
     }
 }
 
-static void lm_gpio_init()
-{
-    // Use SPI0 at 10MHz
-    spi_init(spi_default, 10 * 1000 * 1000);
-    gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SPI);
-    gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SPI);
-
-    // Make the SPI pins available to picotool
-    bi_decl(bi_2pins_with_func(PICO_DEFAULT_SPI_TX_PIN, PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SPI));
-
-    // Chip select is active-low, so we'll initialise it to a driven-high state
-    gpio_init(PICO_DEFAULT_SPI_CSN_PIN);
-    gpio_set_dir(PICO_DEFAULT_SPI_CSN_PIN, GPIO_OUT);
-    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, 1);
-
-    // Make the CS pin available to picotool
-    bi_decl(bi_1pin_with_name(PICO_DEFAULT_SPI_CSN_PIN, "SPI CS"));
-}
-
 void lm_init()
 {
-    lm_gpio_init();
-
     // Send init sequence to device
     lm_write_register_all(CMD_SHUTDOWN, 0);
     lm_write_register_all(CMD_DISPLAYTEST, 0);

@@ -1,16 +1,14 @@
 #include <stdbool.h>
 
-#include "pico/stdio.h"
-#include "pico/stdlib.h"
-
-#include "rtos.h"
+#include "hal.h"
 #include "serial.h"
+#include "rtos.h"
 
 extern void app_task(void* parameters);
 
-int main()
+int main(void)
 {
-    stdio_init_all();
+    hal_init();
 
     xTaskCreate(serial_task, "serial_task", 1024, NULL, tskIDLE_PRIORITY, NULL);
     xTaskCreate(app_task, "app_task", 1024, NULL, tskIDLE_PRIORITY, NULL);
