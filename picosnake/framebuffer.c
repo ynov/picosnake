@@ -99,7 +99,7 @@ void fb_scroll(FrameBuffer* fb, uint16_t amount, uint8_t direction)
 
     case FB_DIRECTION_RIGHT:
         for (uint16_t y = 0; y < fb->height; y++) {
-            for (uint16_t x = fb->width - 1; x >= amount; x--) {
+            for (int16_t x = fb->width - 1; x >= amount; x--) {
                 fb->pixels[y * fb->width + x] = fb->pixels[y * fb->width + x - amount];
             }
 
@@ -118,7 +118,7 @@ void fb_scroll(FrameBuffer* fb, uint16_t amount, uint8_t direction)
         break;
 
     case FB_DIRECTION_DOWN:
-        for (uint16_t y = fb->height - 1; y >= amount; y--) {
+        for (int16_t y = fb->height - 1; y >= amount; y--) {
             memcpy(&fb->pixels[y * fb->width], &fb->pixels[(y - amount) * fb->width], fb->width);
         }
 
@@ -157,7 +157,7 @@ void fb_scroll_and_swap(FrameBuffer* fb, uint16_t amount, uint8_t direction)
             uint8_t temp[amount];
             memcpy(temp, &fb->pixels[y * fb->width + (fb->width - amount)], amount);
 
-            for (uint16_t x = fb->width - 1; x >= amount; x--) {
+            for (int16_t x = fb->width - 1; x >= amount; x--) {
                 fb->pixels[y * fb->width + x] = fb->pixels[y * fb->width + x - amount];
             }
 

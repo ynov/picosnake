@@ -1,8 +1,6 @@
 #include <stdio.h>
 
-#include "FreeRTOSConfig.h"
-#include <FreeRTOS.h>
-#include <task.h>
+#include "rtos.h"
 
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
@@ -14,8 +12,8 @@ int main()
 {
     stdio_init_all();
 
-    xTaskCreate(serial_task, "serial_task", 4096, NULL, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(app_task, "app_task", 4096, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(serial_task, "serial_task", 1024, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(app_task, "app_task", 1024, NULL, tskIDLE_PRIORITY, NULL);
 
     vTaskStartScheduler();
 

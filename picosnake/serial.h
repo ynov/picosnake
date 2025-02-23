@@ -4,8 +4,16 @@
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void serial_task(void* params);
+void serial_printf(const char* str, ...);
 void register_on_message_callback(void (*callback)(const char* message));
-void uart_printf(uart_inst_t* uart, const char* str, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

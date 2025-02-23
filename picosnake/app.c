@@ -1,14 +1,12 @@
-#include <FreeRTOS.h>
-#include <stdlib.h>
-#include <task.h>
-
 #include "hardware/adc.h"
 #include "hardware/spi.h"
+
 #include "pico/binary_info.h"
 #include "pico/stdlib.h"
 
 #include "framebuffer.h"
 #include "ledmatrix.h"
+#include "rtos.h"
 #include "serial.h"
 #include "snake.h"
 
@@ -42,7 +40,6 @@ static void reset_game()
     snake_spawn_food_random(&snake);
 }
 
-
 static void on_message(const char* message)
 {
     uint8_t next_direction;
@@ -50,22 +47,22 @@ static void on_message(const char* message)
         next_direction = SNAKE_DIRECTION_UP;
 
         printf("log: moving up...\r\n");
-        uart_printf(uart0, "ok:%s\r\n", message);
+        serial_printf("ok:%s\r\n", message);
     } else if (strcmp(message, CMD_DOWN) == 0) {
         next_direction = SNAKE_DIRECTION_DOWN;
 
         printf("log: moving down...\r\n");
-        uart_printf(uart0, "ok:%s\r\n", message);
+        serial_printf("ok:%s\r\n", message);
     } else if (strcmp(message, CMD_LEFT) == 0) {
         next_direction = SNAKE_DIRECTION_LEFT;
 
         printf("log: moving left...\r\n");
-        uart_printf(uart0, "ok:%s\r\n", message);
+        serial_printf("ok:%s\r\n", message);
     } else if (strcmp(message, CMD_RIGHT) == 0) {
         next_direction = SNAKE_DIRECTION_RIGHT;
 
         printf("log: moving right...\r\n");
-        uart_printf(uart0, "ok:%s\r\n", message);
+        serial_printf("ok:%s\r\n", message);
     } else if (strcmp(message, CMD_RESET) == 0) {
         move_direction = INITIAL_DIRECTION;
         reset_game();
@@ -79,6 +76,7 @@ static void on_message(const char* message)
 void app_task(void* parameters)
 {
     init_random();
+
     register_on_message_callback(on_message);
 
     reset_game();
@@ -86,6 +84,8 @@ void app_task(void* parameters)
     fb_init_from_buffer(fb, NUM_COLUMNS, NUM_ROWS, snake_buffer());
 
     lm_init();
+
+    serial_printf("game initialized.\r\n");
 
     while (true) {
         vTaskDelay(pdMS_TO_TICKS(MOVEMENT_DELAY_MS / 2));

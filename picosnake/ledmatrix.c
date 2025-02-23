@@ -1,20 +1,19 @@
+#include <string.h>
+
 #include "hardware/spi.h"
+
 #include "pico/binary_info.h"
 #include "pico/stdlib.h"
-
-#include <string.h>
 
 #include "framebuffer.h"
 #include "ledmatrix.h"
 
 /**
- * Reference:
+ * SPI0 GPIO Configuration
  *
- * GPIO 17 (pin 22) Chip select -> CS on Max7219 board
- * GPIO 18 (pin 24) SCK/spi0_sclk -> CLK on Max7219 board
- * GPIO 19 (pin 25) MOSI/spi0_tx -> DIN on Max7219 board
- * 5v (pin 40) -> VCC on Max7219 board
- * GND (pin 38) -> GND on Max7219 board
+ * GP17 (pin 22) ------> Chip Select    ------> CS on Max7219 board
+ * GP18 (pin 24) ------> SCK / SPI0_SCK ------> CLK on Max7219 board
+ * GP19 (pin 25) ------> MOSI / SPI0_TX ------> DIN on Max7219 board
  **/
 
 const uint8_t CMD_NOOP = 0;
@@ -94,7 +93,7 @@ void lm_write_register_from_framebuffer(FrameBuffer* fb)
     }
 }
 
-void lm_init()
+static void lm_gpio_init()
 {
     // Use SPI0 at 10MHz
     spi_init(spi_default, 10 * 1000 * 1000);
@@ -111,6 +110,11 @@ void lm_init()
 
     // Make the CS pin available to picotool
     bi_decl(bi_1pin_with_name(PICO_DEFAULT_SPI_CSN_PIN, "SPI CS"));
+}
+
+void lm_init()
+{
+    lm_gpio_init();
 
     // Send init sequence to device
     lm_write_register_all(CMD_SHUTDOWN, 0);
