@@ -1,7 +1,7 @@
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 
-#include "page.h"
 #include "wifi.h"
+#include "page.h"
 
 WiFiServer server(80);
 
@@ -13,8 +13,6 @@ WiFiServer server(80);
 
 void wifi_setup()
 {
-    WiFi.useStaticBuffers(true);
-
 #if WIFI_MODE_WIFI_AP && WIFI_MODE_WIFI_STA
     WiFi.mode(WIFI_AP_STA);
 
@@ -25,7 +23,7 @@ void wifi_setup()
     WiFi.begin(ssid, password);
     Serial.printf("log: connecting to wifi\r\n");
     while (WiFi.status() != WL_CONNECTED) {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        delay(100);
     }
     Serial.printf("log: connected\r\n");
     Serial.printf("log: sta ip_address: %s\r\n", WiFi.localIP().toString().c_str());
@@ -40,7 +38,7 @@ void wifi_setup()
 
     Serial.printf("log: connecting to wifi\r\n");
     while (WiFi.status() != WL_CONNECTED) {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        delay(100);
     }
 
     Serial.printf("log: connected\r\n");
@@ -108,15 +106,5 @@ void wifi_main()
         }
 
         client.stop();
-    }
-}
-
-void wifi_task(void* parameters)
-{
-    wifi_setup();
-
-    while (true) {
-        wifi_main();
-        vTaskDelay(1);
     }
 }

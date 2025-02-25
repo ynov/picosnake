@@ -6,52 +6,50 @@
 #define RX_BUFFER_RESET_CYCLE 10000
 #define UART_BAUD_RATE 19200
 
-static char rx_buffer[RX_BUFFER_SIZE];
-static uint16_t rx_buffer_index, rx_buffer_not_empty_cycle = 0;
-
-static inline void reset_buffer()
+void serial_task(void* parameters)
 {
-    rx_buffer_index = 0;
-    rx_buffer_not_empty_cycle = 0;
+    static char rx_buffer[RX_BUFFER_SIZE];
+    static uint16_t rx_buffer_index = 0;
+    static TickType_t last_rx_buffer_not_empty = 0;
+
+    while (true) {
+        if (Serial.available()) {
+            char ch = Serial.read();
+            last_rx_buffer_not_empty = xTaskGetTickCount();
+
+            if (rx_buffer_index >= RX_BUFFER_SIZE) {
+                rx_buffer_index = 0;
+            }
+
+            if (ch == '\n') {
+                rx_buffer[rx_buffer_index] = '\0';
+                rx_buffer_index = 0;
+
+                Serial.printf("log: %s\r\n", rx_buffer);
+            } else if (ch != '\r' && ch != '\n') {
+                rx_buffer[rx_buffer_index++] = ch;
+            }
+        } else {
+            vTaskDelay(1);
+        }
+
+        // If we haven't read anything for a while, reset the buffer
+        if (rx_buffer_index > 0 && xTaskGetTickCount() - last_rx_buffer_not_empty > 1000) {
+            rx_buffer_index = 0;
+        }
+    }
 }
 
 void setup()
 {
-    // Enable pull-up on RX pin
-    pinMode(3, INPUT_PULLUP);
-
-    delay(50);
+    // Enable pull-up on RX pin (ESP32-S3-DevKitC-1)
+    pinMode(44, INPUT_PULLUP);
 
     Serial.begin(UART_BAUD_RATE);
-    Serial.printf("log: PicoSnake server!\r\n");
+    Serial.printf("log: PicoSnake server (ESP32)!\r\n");
 
-    wifi_setup();
+    xTaskCreate(wifi_task, "wifi_task", 8192, NULL, 1, NULL);
+    xTaskCreate(serial_task, "serial_task", 4096, NULL, 1, NULL);
 }
 
-void serialEvent()
-{
-    while (Serial.available()) {
-        char ch = Serial.read();
-        if (ch == '\n') {
-            rx_buffer[rx_buffer_index] = '\0';
-            Serial.printf("log: %s\r\n", rx_buffer);
-            reset_buffer();
-        } else if (ch != '\r' && ch != '\n') {
-            rx_buffer[rx_buffer_index++] = ch;
-        }
-    }
-}
-
-void loop()
-{
-    wifi_main();
-
-    // After RX_BUFFER_RESET_CYCLE (10,000) loop cycles of non empty buffer, reset the buffer
-    if (rx_buffer_index > 0) {
-        if (rx_buffer_not_empty_cycle > RX_BUFFER_RESET_CYCLE) {
-            reset_buffer();
-        } else {
-            rx_buffer_not_empty_cycle++;
-        }
-    }
-}
+void loop() { }

@@ -1,4 +1,4 @@
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 
 #ifndef WIFI_H
 #define WIFI_H
@@ -15,7 +15,8 @@ extern const char* password;
 extern const char* ap_ssid;
 extern const char* ap_password;
 
-void wifi_task(void* parameters);
+void wifi_setup();
+void wifi_main();
 
 #ifdef __cplusplus
 }
