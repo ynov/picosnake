@@ -2,8 +2,6 @@
 // Led Matrix uses SPI1
 #include "ledmatrix.h"
 
-#define BAUD_RATE 19200
-
 /** System HAL Init */
 
 void HAL_MspInit(void) { __HAL_RCC_PWR_CLK_ENABLE(); }
